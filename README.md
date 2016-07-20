@@ -6,8 +6,8 @@ It is currently extremely unoptimized and naive implementation.
 
 Sample text input:
 
-![Alt text](ImageQuilt/input/text.bmp "Title")
+![Alt text](input/input.bmp "Title")
 
 Output with 64 tilesize, 8 number of tiles per dim, 16 pixels overlap, 0.1 error:
 
-![Alt text](ImageQuilt/output/output.bmp "Title")
+![Alt text](output/output.bmp "Title")
