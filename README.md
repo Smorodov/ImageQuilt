@@ -4,10 +4,10 @@ A simple implementation of the Image Quilting algorithm from Efros & Freeman pap
 
 It is currently extremely unoptimized and naive implementation.
 
-Sample text input:
+Sample input:
 
 ![Alt text](input/input.bmp "Title")
 
-Output with 64 tilesize, 8 number of tiles per dim, 16 pixels overlap, 0.1 error:
+Synthesis output:
 
 ![Alt text](output/output.bmp "Title")
