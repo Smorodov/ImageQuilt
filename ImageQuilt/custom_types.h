@@ -16,7 +16,12 @@ public:
 	precision* cielab_data;
 
 	Image(unsigned int _w, unsigned int _h);
-	Image(unsigned int _w, unsigned int _h, uint8_t* _data) : width(_w), height(_h), data(_data) {}
+	Image(unsigned int _w, unsigned int _h, uint8_t* _data) : width(_w), height(_h), data(_data) 
+	{
+		hsv_data = nullptr;
+		xyz_data = nullptr;
+		cielab_data = nullptr;
+	}
 	~Image();
 	void rgb2hsv();
 	static void rgb2hsv(precision r, precision g, precision b, precision* h, precision* s, precision* v);

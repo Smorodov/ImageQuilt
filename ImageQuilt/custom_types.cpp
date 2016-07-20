@@ -4,6 +4,9 @@
 
 Image::Image(unsigned int _w, unsigned int _h)
 {
+	hsv_data = nullptr;
+	xyz_data = nullptr;
+	cielab_data = nullptr;
 	width = _w;
 	height = _h;
 	data = new uint8_t[3 * width*height];
@@ -18,6 +21,10 @@ Image::~Image()
 	delete hsv_data;
 	delete xyz_data;
 	delete cielab_data;
+	hsv_data = nullptr;
+	xyz_data = nullptr;
+	cielab_data = nullptr;
+	data = nullptr;
 }
 
 void Image::rgb2hsv()
