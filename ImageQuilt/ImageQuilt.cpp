@@ -3,17 +3,11 @@
 #include <iostream>
 #include <fstream>
 #include <queue>
-#define STBI_ONLY_BMP
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
-
-#include <Windows.h>
 
 //#define USE_RGB
 //#define USE_HSV
 //#define USE_XYZ
+
 #define USE_CIELAB
 
 using std::cout;
@@ -67,7 +61,7 @@ inline void ImageQuilt::applyPatch(Patch * patch, unsigned int out_w, unsigned i
 #endif
 }
 
-void ImageQuilt::synthesize()
+void ImageQuilt::synthesize( void(* progress_callback)(cv::Mat&), void(*result_callback)(cv::Mat&))
 {
 	std::ofstream outFile("output.txt");
 	// pick a random patch
@@ -111,25 +105,7 @@ void ImageQuilt::synthesize()
 		line++;
 		col = 0;
 	}
-	/*for (auto h = 0; h < tilesize; h++)
-	{
-		for (auto w = 0; w < tilesize; w++)
-		{
-			outFile << std::to_string(output_image->rc(w, h)) << "," << std::to_string(output_image->gc(w, h)) << "," << std::to_string(output_image->bc(w, h)) << " ";
-		}
-		outFile << endl;
-	}
-	outFile << "HSV" << endl;
-	output_image->rgb2hsv();
-	for (auto h = 0; h < tilesize; h++)
-	{
-		for (auto w = 0; w < tilesize; w++)
-		{
-			outFile << std::to_string(output_image->h(w, h)) << "," << std::to_string(output_image->s(w, h)) << "," << std::to_string(output_image->v(w, h)) << " ";
-		}
-		outFile << endl;
-	}
-	outFile << "AFTER" << endl;*/
+
 #ifdef USE_HSV
 	output_image->hsv2rgb();
 #elif defined USE_XYZ
@@ -138,24 +114,6 @@ void ImageQuilt::synthesize()
 	output_image->cielab2xyz();
 	output_image->xyz2rgb();
 #endif
-	/*for (auto h = 0; h < tilesize; h++)
-	{
-		for (auto w = 0; w < tilesize; w++)
-		{
-			outFile << std::to_string(output_image->rc(w, h)) << "," << std::to_string(output_image->gc(w, h)) << "," << std::to_string(output_image->bc(w, h)) << " ";
-		}
-		outFile << endl;
-	}*/
-	stbi_write_bmp(output_filename.c_str(), output_width, output_height, 3, output_image->data);
-	/*Sleep(1000);
-	for (auto h = 0; h < output_height; h++)
-	{
-		for (auto w = 0; w < output_width; w++)
-		{
-			std::cout << std::to_string(output_image->rc(w, h)) << "\t";
-		}
-		std::cout << endl;
-	}*/
 	// total number of tiles to place
 	unsigned int total_tiles = num_tiles * num_tiles;
 	// start placing them from left to right, top to bottom
@@ -311,7 +269,10 @@ void ImageQuilt::synthesize()
 			output_image->cielab2xyz();
 			output_image->xyz2rgb();
 #endif
-			stbi_write_bmp(output_filename.c_str(), output_width, output_height, 3, output_image->data);
+			//stbi_write_bmp(output_filename.c_str(), output_width, output_height, 3, output_image->data); // ---
+			cv::Mat res = cv::Mat(output_height, output_width, CV_8UC3, output_image->data).clone();
+			cv::cvtColor(res, res, cv::COLOR_BGR2RGB);
+			progress_callback(res);
 		}
 	}
 	// store the result to .bmp
@@ -323,7 +284,10 @@ void ImageQuilt::synthesize()
 	output_image->cielab2xyz();
 	output_image->xyz2rgb();
 #endif
-	stbi_write_bmp(output_filename.c_str(), output_width, output_height, 3, output_image->data);
+	//stbi_write_bmp(output_filename.c_str(), output_width, output_height, 3, output_image->data);
+	cv::Mat res = cv::Mat(output_height, output_width, CV_8UC3, output_image->data).clone();
+	cv::cvtColor(res, res, cv::COLOR_BGR2RGB);
+	progress_callback(res);
 	// cleanup
 	delete input_image;
 	delete output_image;
@@ -337,7 +301,15 @@ Image* ImageQuilt::get_output() const
 void ImageQuilt::loadImage()
 {
 	int x, y, n;
-	uint8_t* data = stbi_load(input_filename.c_str(), &x, &y, &n, 0);
+	uint8_t* data;
+	cv::Mat img=cv::imread(input_filename,1);
+	x = img.cols;
+	y = img.rows;
+	n = img.channels();
+	
+	data = new uchar[x*y*n];
+	cv::cvtColor(img, img, cv::COLOR_RGB2BGR);
+	memcpy(data, img.data, x*y*n);
 	assert(data);
 	input_image = new Image(x, y, data);
 }
@@ -377,12 +349,6 @@ inline double ImageQuilt::errorCalc(unsigned int in_w, unsigned int in_h, unsign
 	val += pow(input_image->b(in_w, in_h) - output_image->b(out_w, out_h), 2);
 	return val;
 #endif
-	/*double val = 0.0;
-	val += 0.3*output_image->rc(out_w, out_h) * abs(output_image->rc(out_w, out_h) - input_image->rc(in_w, in_h));
-	val += 0.59*output_image->gc(out_w, out_h) * abs(output_image->gc(out_w, out_h) - input_image->gc(in_w, in_h));
-	val += 0.11*output_image->bc(out_w, out_h) * abs(output_image->bc(out_w, out_h) - input_image->bc(in_w, in_h));
-	return val / 3;*/
-	//return pow(input_image->v(in_w, in_h) - output_image->v(out_w, out_h),2);
 }
 
 vector<int>* ImageQuilt::minCut(unsigned int pos_w, unsigned int pos_h, unsigned int patch_w, unsigned int patch_h, const bool left)
@@ -411,9 +377,6 @@ vector<int>* ImageQuilt::minCut(unsigned int pos_w, unsigned int pos_h, unsigned
 		{
 			dis[h][w] = INT_MAX;
 			visited[h][w] = false;
-			/*double err = 0.3*pow(input_image->rc(patch_w + w, patch_h + h) - output_image->rc(pos_w + w, pos_h + h), 2);
-			err += 0.59*pow(input_image->gc(patch_w + w, patch_h + h) - output_image->gc(pos_w + w, pos_h + h), 2);
-			err += 0.11*pow(input_image->bc(patch_w + w, patch_h + h) - output_image->bc(pos_w + w, pos_h + h), 2);*/
 			overlap_diff[h][w] = sqrt(errorCalc(patch_w + w, patch_h + h, pos_w + w, pos_h + h));
 		}
 	}

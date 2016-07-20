@@ -20,9 +20,7 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
   					ImageQuilt/custom_types.cpp
   					ImageQuilt/ImageQuilt.cpp )
 
-  set(folder_header extlibs/include/stb_image.h
-  					extlibs/include/stb_image_write.h
-  					ImageQuilt/custom_types.h
+  set(folder_header ImageQuilt/custom_types.h
   					ImageQuilt/ImageQuilt.h )
 
 

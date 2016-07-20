@@ -4,7 +4,7 @@
 #include <iostream>
 #include <time.h>
 #include "custom_types.h"
-
+#include "opencv2/opencv.hpp"
 using std::string;
 class ImageQuilt
 {
@@ -20,10 +20,12 @@ public:
 		{
 			overlap = static_cast<unsigned int>(round(tilesize / 6));
 		}
+
 		if(error == 0)
 		{
 			error = 0.1;
 		}
+
 		output_filename = _output_folder + "output-" + std::to_string(tilesize) + "-" + std::to_string(num_tiles) + "-" + std::to_string(overlap) + ".bmp";
 		output_width = num_tiles * tilesize - ((num_tiles - 1) * overlap);
 		output_height = num_tiles * tilesize - ((num_tiles - 1) * overlap);
@@ -34,7 +36,7 @@ public:
 	~ImageQuilt();
 	inline void fillPatch(Patch* patch, unsigned int inner_w, unsigned int inner_h, unsigned int out_w, unsigned int out_h);
 	inline void applyPatch(Patch* patch, unsigned int out_w, unsigned int out_h, unsigned int inner_w, unsigned int inner_h);
-	void synthesize();
+	void synthesize( void(*progress_callback)(cv::Mat&), void(*result_callback)(cv::Mat&));
 	Image* get_output() const;
 private:
 	void loadImage();
